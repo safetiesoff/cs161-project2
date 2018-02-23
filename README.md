@@ -1,7 +1,7 @@
 CS 161 Spring 2018 Project 2: Secure File Store
 ===============================================
 
-Please see the [instructions](http://inst.eecs.berkeley.edu/~cs161/sp18/projects/2/problems.pdf)
+Please see the [instructions](http://inst.eecs.berkeley.edu/~cs161/sp18/projects/2/project2-problems.pdf)
 and [online documentation](http://inst.eecs.berkeley.edu/~cs161/sp18/projects/2/docs/gettingstarted.html).
 If you have questions about or find errors in this documentation, please post on
 Piazza.
