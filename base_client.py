@@ -140,7 +140,7 @@ class BaseClient(object):
         ::
 
            msg = alice.share("bob", filename)
-           bob.receive_share("alice", msg, newfilename)
+           bob.receive_share("alice", newfilename, msg)
 
         :param str user: The username of the user you are sharing with.
         :param str name: The name of the file you are sharing with `user`.
