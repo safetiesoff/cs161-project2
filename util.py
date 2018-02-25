@@ -14,10 +14,6 @@ from Crypto.PublicKey import RSA
 def RSA_to_json_string(obj):
     """Convert RSA key Python objects into a JSON-serialized string.
 
-    Because our Crypto API operates on strings, this can be useful
-    for converting objects like lists or dictionaries into
-    string format, instead of deriving your own data format.
-
     This function can correctly handle serializing RSA key objects.
 
     This uses the JSON library to dump the object to a string. For more
