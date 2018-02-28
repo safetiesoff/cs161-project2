@@ -210,6 +210,11 @@ class Crypto(object):
         if segment_size:
             kwargs['segment_size'] = segment_size
 
+        if mode_name not in ['CBC', 'CFB', 'OFB']:
+            kwargs.pop('IV', None)
+        if mode_name !='CTR':
+            kwargs.pop('counter', None)
+
         message_bytes = _string_to_bytes(message)
         message_bytes = self._pad(message_bytes, 16)
         key_bytes = _hex_to_bytes(key)
@@ -279,6 +284,11 @@ class Crypto(object):
             kwargs['counter'] = ctr
         if segment_size:
             kwargs['segment_size'] = segment_size
+
+        if mode_name not in ['CBC', 'CFB', 'OFB']:
+            kwargs.pop('IV', None)
+        if mode_name !='CTR':
+            kwargs.pop('counter', None)
 
         ciphertext_bytes = _hex_to_bytes(ciphertext)
         key_bytes = _hex_to_bytes(key)
