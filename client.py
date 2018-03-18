@@ -302,12 +302,23 @@ class Client(BaseClient):
         else:
             new_header_location = self.create_header(header_location, file_owner_uname, "", chain=True, metadata=False)
 
-        return new_header_location
+        c1 = self.crypto.asymmetric_encrypt(new_header_location, self.pks.get_encryption_key(user))
+        s1 = self.crypto.asymmetric_sign(c1, self.rsa_priv_key)
+
+        return c1+s1
 
     def receive_share(self, from_username, newname, message):
         if message == "":
             return
-        self.create_pointer(newname, message, from_username)
+            
+        c1, s1 = message[:1044], message[1044:]
+
+        if not self.crypto.asymmetric_verify(c1, s1, self.pks.get_signature_key(from_username)):
+            raise IntegrityError("communication tampered with") 
+
+        location = self.crypto.asymmetric_decrypt(c1, self.elg_priv_key)
+
+        self.create_pointer(newname, location, from_username)
 
     def revoke(self, user, fname):
         header_location, file_owner_uname = self.read_verify_ptr(self.get_pointer_loc(fname), self.get_pointer_mac(fname), self.get_pointer_key(fname))
