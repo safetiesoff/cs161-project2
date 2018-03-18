@@ -11,6 +11,62 @@ import Crypto
 from Crypto.PublicKey import RSA
 
 
+def to_json_string(obj):
+    """Convert basic Python objects into a JSON-serialized string.
+
+    This can be useful for converting objects like lists or dictionaries into
+    string format, instead of deriving your own data format.
+
+    This function can correctly handle serializing RSA key objects.
+
+    This uses the JSON library to dump the object to a string. For more
+    information on JSON in Python, see the `JSON library
+    <https://docs.python.org/3/library/json.html>`_ in the Python standard
+    library.
+
+    :param obj: A JSON-serializable Python object
+    :returns: A JSON-serialized string for `obj`
+
+    :raises TypeError: If `obj` isn't JSON serializable.
+    """
+    class CustomEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, Crypto.PublicKey.RSA._RSAobj):
+                return {'__type__': '_RSAobj', 'PEMdata':
+                        str(obj.exportKey(format='PEM'), 'utf-8')}
+            if isinstance(obj, Crypto.PublicKey.ElGamal.ElGamalobj):
+                return {'__type__': 'ElGamalobj', 'y': obj.y,
+                        'g': obj.g, 'p': obj.p}
+            return json.JSONEncoder.default(self, obj)
+    return json.dumps(obj, cls=CustomEncoder)
+
+
+def from_json_string(s):
+    """Convert a JSON string back into a basic Python object.
+
+    This function can correctly handle deserializing back into RSA key objects.
+
+    This uses the JSON library to load the object from a string.
+    For more information on JSON in Python, see the `JSON library
+    <https://docs.python.org/3/library/json.html>`_ in the Python standard
+    library.
+
+    :param str s: A JSON string
+    :returns: The Python object deserialized from `s`
+
+    :raises JSONDecodeError: If `s` is not a valid JSON document.
+    :raises TypeError: If `s` isn't a string.
+    """
+    def Custom_decoder(obj):
+        if '__type__' in obj and obj['__type__'] == '_RSAobj':
+            return RSA.importKey(obj['PEMdata'])
+        if '__type__' in obj and obj['__type__'] == 'ElGamalobj':
+            return ElGamal.construct(tuple(obj['p'], obj['g'], obj['y']))
+        return obj
+    return json.loads(s, object_hook=Custom_decoder)
+            
+    
+
 def RSA_to_json_string(obj):
     """Convert RSA key Python objects into a JSON-serialized string.
 
