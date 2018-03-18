@@ -93,7 +93,7 @@ class Client(BaseClient):
         self.storage_server.put(loc, mac_val+nonce+aes_val)
 
 
-    def read_verify_header(self, location, mac_key, decode_key, include_metadata=False):
+    def read_verify_header(self, location, decode_key, mac_key, include_metadata=False):
         """
         goes to location, reads and verifies the header file there
         returns the location, decryption key, and mac key required to read/write the actual file if not chained
@@ -134,7 +134,7 @@ class Client(BaseClient):
     
     def write_metadata(self, location, value):
         aes_key = location[:ENC_KEY_LEN]
-        mac_key = location[:ENC_KEY_LEN]
+        mac_key = location[-MAC_KEY_LEN:]
 
         raw = self.storage_server.get(location)             
         if raw is None:                                  
@@ -155,7 +155,7 @@ class Client(BaseClient):
         value = message[:LOC_LEN+ENC_KEY_LEN+MAC_KEY_LEN+4] + value
 
         aes_key = location[:ENC_KEY_LEN]
-        mac_key = location[:ENC_KEY_LEN]
+        mac_key = location[-MAC_KEY_LEN:]
 
         nonce = self.crypto.get_random_bytes(NONCE_LEN//2)
         counter = self.crypto.new_counter(COUNTER_LEN, prefix = nonce)
@@ -178,7 +178,7 @@ class Client(BaseClient):
                 value = 'HDR' + file_loc + "0" + arg1 + arg2
 
         aes_key = header_location[:ENC_KEY_LEN]
-        mac_key = header_location[:ENC_KEY_LEN]
+        mac_key = header_location[-MAC_KEY_LEN:]
 
         nonce = self.crypto.get_random_bytes(NONCE_LEN//2)
         counter = self.crypto.new_counter(COUNTER_LEN, prefix = nonce)
@@ -188,7 +188,7 @@ class Client(BaseClient):
         self.storage_server.put(header_location, mac_val+nonce+aes_val)
         return header_location
 
-    def edit_header(self, loc, file_loc, arg1, arg2, mac_key, decode_key):
+    def edit_header(self, loc, file_loc, arg1, arg2, decode_key, mac_key):
         raw = self.storage_server.get(loc)             
         if raw is None:                                  
             raise IntegrityError("header does not exist")
@@ -212,7 +212,7 @@ class Client(BaseClient):
         value = message[:3]+ file_loc + "0" + arg1 + arg2 + message[LOC_LEN+ENC_KEY_LEN+MAC_KEY_LEN+4:]
 
         aes_key = loc[:ENC_KEY_LEN]
-        mac_key = loc[:ENC_KEY_LEN]
+        mac_key = loc[-MAC_KEY_LEN:]
 
         nonce = self.crypto.get_random_bytes(NONCE_LEN//2)
         counter = self.crypto.new_counter(COUNTER_LEN, prefix = nonce)
@@ -264,7 +264,7 @@ class Client(BaseClient):
             loop_flag = True
             while loop_flag:
                 enc_key = header_location[:ENC_KEY_LEN]
-                mac_key = header_location[:ENC_KEY_LEN]
+                mac_key = header_location[-MAC_KEY_LEN:]
                 header_location, file_owner_uname, tag = self.read_verify_header(header_location, enc_key, mac_key)
                 if not tag is None:
                     file_location, file_key, file_mac_key = header_location, file_owner_uname, tag
@@ -280,7 +280,7 @@ class Client(BaseClient):
         loop_flag = True
         while loop_flag:
             enc_key = header_location[:ENC_KEY_LEN]
-            mac_key = header_location[:ENC_KEY_LEN]
+            mac_key = header_location[-MAC_KEY_LEN:]
             header_location, file_owner_uname, tag = self.read_verify_header(header_location, enc_key, mac_key)
             if not tag is None:
                 file_location, file_key, file_mac_key = header_location, file_owner_uname, tag
@@ -293,7 +293,7 @@ class Client(BaseClient):
             return ""
 
         enc_key = header_location[:ENC_KEY_LEN]
-        mac_key = header_location[:ENC_KEY_LEN]
+        mac_key = header_location[-MAC_KEY_LEN:]
         file_location, file_key, file_mac_key, metadata  = self.read_verify_header(header_location, enc_key, mac_key, include_metadata=True)
 
         if not metadata is None:
@@ -322,7 +322,7 @@ class Client(BaseClient):
     def revoke(self, user, fname):
         header_location, file_owner_uname = self.read_verify_ptr(self.get_pointer_loc(fname), self.get_pointer_mac(fname), self.get_pointer_key(fname))
         enc_key = header_location[:ENC_KEY_LEN]
-        mac_key = header_location[:ENC_KEY_LEN]
+        mac_key = header_location[-MAC_KEY_LEN:]
         file_location, file_key, file_mac_key, metadata  = self.read_verify_header(header_location,enc_key, mac_key, include_metadata=True)
         if metadata is None:
             raise IntegrityError("trying to share file that isn't yours")
@@ -347,6 +347,6 @@ class Client(BaseClient):
             if i%2 == 1:
                 loc = list_users[i]
                 enc_key = loc[:ENC_KEY_LEN]
-                mac_key = loc[:ENC_KEY_LEN]
+                mac_key = loc[-MAC_KEY_LEN:]
                 self.edit_header(loc, file_location, file_key, file_mac_key, enc_key, mac_key)
 
