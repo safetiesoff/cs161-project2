@@ -304,14 +304,13 @@ class Client(BaseClient):
 
         c1 = self.crypto.asymmetric_encrypt(new_header_location, self.pks.get_encryption_key(user))
         s1 = self.crypto.asymmetric_sign(c1, self.rsa_priv_key)
-
-        return c1+s1
+        return s1+c1
 
     def receive_share(self, from_username, newname, message):
         if message == "":
             return
-            
-        c1, s1 = message[:1044], message[1044:]
+
+        s1, c1 = message[:512], message[512:]
 
         if not self.crypto.asymmetric_verify(c1, s1, self.pks.get_signature_key(from_username)):
             raise IntegrityError("communication tampered with") 
